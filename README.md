@@ -2,7 +2,7 @@
 
 **English** — A small, dependency-free HTTPS control plane for cloud PCs and remote servers that have no public IP and no usable SSH / RDP. Put one Node.js gateway on the server you own, expose it through a tunnel, and any client that can send an HTTPS POST can list directories, read and write files, run PowerShell / cmd / shell commands, and read an audit log.
 
-**中文** — 给云电脑和远程服务器加一层自建 HTTPS 控制面。网关只监听回环地址，公网入口交给隧道；客户端只需会发 `HTTPS POST + Bearer 令牌 + JSON`，就能列目录、读写文件、执行 `PowerShell` / `cmd` / `sh`、查看审计日志。
+**中文** — 给云电脑和远程服务器加一层自建 HTTPS 控制面。网关只监听回环地址，公网入口交给隧道；客户端只需会发 `HTTPS POST + Bearer 令牌 + JSON`，就能列目录、读写文件、执行 `PowerShell` / `cmd` / `sh`、查看审计日志。已在一台中国电信 TeleAgent 云电脑上连续运行验证，见[背景](#背景在一台真实的-teleagent-云电脑上跑通)。
 
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)
@@ -18,6 +18,28 @@
 本方案换一条路：**不碰厂商客户端，不破解登录，不调用未公开接口**，只在你拥有管理权限的机器上放一个自己写的小网关，自己开隧道，自己保管令牌。原有网站和业务不受影响，控制面可以随时停掉回退。
 
 > 只在你自己拥有、或已获明确授权管理的服务器上使用；部署前请确认服务条款允许运行自建服务。
+
+## 背景：在一台真实的 TeleAgent 云电脑上跑通
+
+这套东西不是纸面方案。它在一台**中国电信 TeleAgent 云电脑**上实际部署并连续运行过，也正是那台机器的约束逼出了这里的设计取舍。
+
+那台机器的条件很典型：
+
+| 约束 | 实际表现 |
+|---|---|
+| 没有公网 IP，RDP 端口不可达 | 只能通过厂商客户端（桌面端 / 网页端）的 HTML5 远程桌面进入 |
+| 访问入口按登录态临时签发 | 无法长期持有固定入口，也无法从外网直连 |
+| 平台按空闲与会话状态回收实例 | 实测约 1～1.5 小时一次强制重置，系统事件为 `Kernel-Power 41`，没有正常关机记录 |
+| 机器上另跑着既有 Web 服务 | 控制面必须与既有服务共存，不占端口、不改配置、不重启站点 |
+
+实测结果：
+
+- 七个动作全部跑通（`health` / `sysinfo` / `list` / `read` / `write` / `exec` / `log`），命令通道覆盖 64 位 `PowerShell`、32 位 `PowerShell` 与 `cmd`。
+- 一次宿主层硬重启后，公网 `health` 在 **104 秒**后恢复 200；另一次公网探测超时后 **16 秒**自愈。
+- 连续运行期间记录 **14 次**自动恢复，连续失败计数保持 0。
+- 全程只用自建网关加标准隧道：**没有破解厂商客户端，没有调用未公开接口，没有改动既有 Web 服务**。
+
+> 本项目与厂商无关联，不是官方方案。TeleAgent 名称仅用于说明实测环境；文中不含任何真实域名、地址、账号或业务路径。
 
 ## 特性
 
@@ -186,3 +208,5 @@ mkdir -p .github/workflows && cp ci/github-actions.yml .github/workflows/ci.yml
 ## 免责
 
 本软件按「现状」提供，不附带任何担保。远程控制通道天然具有高风险：请自行评估合规性与安全边界，只在自有或已授权机器上部署，并自行承担使用后果。
+
+本项目为独立实现，与中国电信及 TeleAgent 产品方无隶属、合作或背书关系，未使用其客户端代码或未公开接口。文中提及的产品名称仅作环境说明。
