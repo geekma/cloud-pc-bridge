@@ -1,0 +1,157 @@
+# 给支持「自定义动作 / 函数调用 / OpenAPI 工具」的 AI 客户端使用。
+# 把所有 <> 占位换成自己的值，导入客户端的自定义动作配置里。
+# 认证方式选 API key / Bearer，密钥填服务端 config.json 里的同一个 token。
+openapi: 3.1.0
+info:
+  title: Remote Server Bridge
+  version: 1.0.0
+  description: 读取文件、写入文件、执行命令、查询远程服务器状态、读取审计日志。控制面统一为 HTTPS POST + JSON + Bearer 令牌；业务失败可能返回 400 且响应体含 ok:false，鉴权失败 401，限流 429，动作不存在 404，非 POST 405，反代上游不可达 502。
+servers:
+  - url: https://<你的隧道域名>
+security:
+  - bearerAuth: []
+paths:
+  /__agent/health:
+    post:
+      operationId: bridgeHealth
+      summary: 检查远程网关是否在线，返回版本、白名单根目录、命令执行开关
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: 网关状态
+  /__agent/sysinfo:
+    post:
+      operationId: bridgeSysinfo
+      summary: 查询远程服务器系统信息（平台、CPU、内存、运行时间）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: 系统信息
+  /__agent/list:
+    post:
+      operationId: bridgeList
+      summary: 列出远程服务器白名单目录内的文件
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+                  description: 服务器上的绝对路径，必须在 roots 白名单内
+      responses:
+        '200':
+          description: 文件列表
+  /__agent/read:
+    post:
+      operationId: bridgeRead
+      summary: 读取远程服务器文件；中文或二进制内容用 encoding=base64 取原始字节
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+                encoding:
+                  type: string
+                  enum: [utf8, base64, latin1, hex]
+                  default: utf8
+                maxBytes:
+                  type: integer
+                  default: 262144
+      responses:
+        '200':
+          description: 文件内容
+  /__agent/write:
+    post:
+      operationId: bridgeWrite
+      summary: 写入远程服务器文件（自动备份）；二进制或中文用 encoding=base64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path, content]
+              properties:
+                path:
+                  type: string
+                content:
+                  type: string
+                encoding:
+                  type: string
+                  enum: [utf8, base64, latin1, hex]
+                  default: utf8
+      responses:
+        '200':
+          description: 写入结果
+  /__agent/exec:
+    post:
+      operationId: bridgeExec
+      summary: 在远程服务器执行 shell 命令（服务端 execEnabled 必须为 true）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [command]
+              properties:
+                command:
+                  type: string
+                  description: 命令正文
+                shell:
+                  type: string
+                  description: 服务端 config.shells 里的名字，例如 powershell / cmd / sh
+                cwd:
+                  type: string
+                  description: 工作目录，必须在白名单内
+                timeoutMs:
+                  type: integer
+                  default: 60000
+      responses:
+        '200':
+          description: 执行结果（退出码、标准输出、标准错误、耗时）
+  /__agent/log:
+    post:
+      operationId: bridgeLog
+      summary: 读取网关审计日志尾部，查看谁在什么时候执行了什么动作
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lines:
+                  type: integer
+                  default: 50
+                  description: 返回最近多少行
+      responses:
+        '200':
+          description: 审计日志文本
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque-token

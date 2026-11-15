@@ -1,0 +1,27 @@
+# 运行时与本地配置，绝不提交
+config.json
+bridge-handoff.json
+*.log
+backups/
+.env
+.env.*
+
+# 本机生成的客户端配置
+remote-bridge/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# 编辑器与系统
+.DS_Store
+.idea/
+.vscode/
+*.swp

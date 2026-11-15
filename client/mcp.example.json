@@ -1,0 +1,14 @@
+{
+  "_comment": "给任意支持 MCP(stdio) 的客户端用。把两个 <> 占位换成自己的值；token 不要写在这里，用环境变量或 0600 文件。",
+  "mcpServers": {
+    "remote-server": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["<把这里换成 mcp-bridge.js 的绝对路径>"],
+      "env": {
+        "BRIDGE_URL": "https://<你的隧道域名>",
+        "BRIDGE_TOKEN": "<或者直接在这里填 token，但更推荐用环境变量/令牌文件>"
+      }
+    }
+  }
+}
