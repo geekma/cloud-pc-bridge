@@ -19,7 +19,7 @@
 - `client/mcp-bridge.js`：MCP stdio 桥，暴露 7 个工具。
 - `client/mcp.example.json`、`client/openapi.example.yaml`：客户端接入模板。
 - 文档：背景与架构、服务器端配置、保活与平台定时重启、客户端配置、任意客户端接入、能力与限制、运维手册、接口契约。
-- CI：语法检查、生成物一致性检查、端到端冒烟测试。
+- `ci/github-actions.yml`：语法检查、生成物一致性检查、端到端冒烟测试。
 
 ### Security
 

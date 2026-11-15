@@ -38,6 +38,18 @@ python3 server/make-onefile.py && git diff --exit-code -- server/setup-server.ps
 
 如果改了网关行为，请在本地起一个临时实例做端到端验证（临时端口 + 临时目录 + 临时令牌），至少覆盖：`health`、无令牌 401、`list`、`write`/`read` 往返、`log`、以及 `exec` 的开关、拒绝与超时。
 
+## 持续集成
+
+CI 定义放在 `ci/github-actions.yml`，包含三部分：语法检查（Node / Python / Shell）、生成物一致性（`make-onefile.py` 后 `git diff` 必须为空）、端到端冒烟（临时实例跑 `health`、无令牌 401、七个动作、白名单外路径被拒）。
+
+启用：
+
+```bash
+mkdir -p .github/workflows && cp ci/github-actions.yml .github/workflows/ci.yml
+```
+
+提交 `.github/workflows/` 下的文件要求令牌带 `workflow` scope；用 `gh` 时先执行 `gh auth refresh -s workflow`。日常改动可以直接在本地跑上面「提交前自检」的命令，效果等价。
+
 ## 提交信息
 
 使用 Conventional Commits：

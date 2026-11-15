@@ -117,7 +117,7 @@ python3 client/bridge.py exec 'df -h' --shell sh
 │   ├── mcp.example.json             # MCP 配置模板
 │   └── openapi.example.yaml         # OpenAPI 描述，供自定义动作 / 函数调用
 ├── docs/                            # 文档
-└── .github/workflows/ci.yml         # 语法与一致性检查
+└── ci/github-actions.yml            # CI 定义，启用方式见 CONTRIBUTING
 ```
 
 ## 文档
@@ -170,6 +170,14 @@ python3 client/bridge.py exec 'df -h' --shell sh
 ## 参与
 
 见 [CONTRIBUTING.md](CONTRIBUTING.md)。改动 `server/gateway.js` 或 `server/keepalive.ps1` 后必须重新运行 `python3 server/make-onefile.py`，否则一键脚本里的内嵌副本会与源文件不一致。
+
+CI 定义在 `ci/github-actions.yml`，包含语法检查、生成物一致性检查与端到端冒烟测试。启用方式：
+
+```bash
+mkdir -p .github/workflows && cp ci/github-actions.yml .github/workflows/ci.yml
+```
+
+提交这个文件需要 GitHub 令牌带 `workflow` scope。用 `gh` 时可先执行 `gh auth refresh -s workflow` 完成授权。
 
 ## 许可
 
