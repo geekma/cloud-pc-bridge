@@ -2,6 +2,12 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Changed
+
+- 冷启动文档补充「能不能用接口唤醒」的实测结论：厂商客户端有完整实例生命周期接口，但被进程级 HMAC 密钥（每次启动重新生成、只在内存）与登录态 Cookie 保护，不构成可维护的脚本集成点；唤醒仍走客户端，状态仍走公网探针。
+
 ## [1.0.0] - 2026-11-15
 
 首个公开版本。
