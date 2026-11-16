@@ -55,6 +55,20 @@ def token():
     sys.exit('缺少 token：设置 BRIDGE_TOKEN，或写入 %s（权限 600）' % TOKEN_FILE)
 
 
+def tunnel_hint(code, body):
+    """把隧道服务商的错误页翻译成下一步动作。"""
+    low = body.lower()
+    if code == 404 and ('err_ngrok' in low or 'offline' in low or 'ngrok' in low
+                        or 'tunnel' in low or 'cloudflare' in low):
+        return ('隧道端点已离线或地址已失效：免费版隧道在机器关机或进程退出后下线，'
+                '重启后通常换域名。先确认实例是否在运行，再取新地址并更新 BRIDGE_URL。')
+    if code in (502, 503, 504):
+        return '隧道在线但后端不响应：实例可能正在启动，或网关没起来。先确认桌面可交互，再看服务端计划任务。'
+    if code == 401:
+        return '令牌不被接受：核对 BRIDGE_TOKEN 与服务端 config.json 是否一致。'
+    return '返回的不是 JSON，可能是隧道服务商的错误页或反向代理拦截页。'
+
+
 def call(action, payload, attempts=3, timeout=60):
     url = base_url() + '/__agent/' + action
     data = json.dumps(payload or {}, ensure_ascii=False).encode('utf-8')
@@ -77,12 +91,14 @@ def call(action, payload, attempts=3, timeout=60):
             try:
                 return json.loads(body)
             except ValueError:
-                return {'ok': False, '_http': e.code, 'raw': body[:500]}
+                return {'ok': False, '_http': e.code, 'raw': body[:500],
+                        'hint': tunnel_hint(e.code, body)}
         except Exception as e:                       # noqa: BLE001
             last = e
             if i < attempts:
                 time.sleep(0.8 * i)
-    return {'ok': False, 'error': 'RETRY_EXHAUSTED: %s' % last}
+    return {'ok': False, 'error': 'RETRY_EXHAUSTED: %s' % last,
+            'hint': '连不上：机器可能被平台休眠或关机，先确认实例状态；若实例在运行，检查隧道进程与网关计划任务。'}
 
 
 def dump(obj):
